@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>天氣預報 (36 小時)</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>未來 36 小時各區天氣預報</h1>
+      <div id="weatherList">載入中…</div>
+      <div class="btn-container">
+        <a class="btn" href="javascript:history.back()">上一頁</a>
+        <a class="btn" href="index.html">回首頁</a>
+      </div>
+    </div>
+
+
+    <script>//url、record要改
+      const apiUrl = 'https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-FE4AD205-4642-40AD-B7FD-336A53D1ED2A';
+      const weatherList = document.getElementById('weatherList');
+
+
+      async function loadWeather() {//async match await match fetch (wait url load to resp)
+        try {
+          const resp = await fetch(apiUrl);//GET
+          if (!resp.ok) throw new Error(`HTTP 錯誤：${resp.status}`);//1. $後面為變數 2. fetch後O不OK
+          const data = await resp.json();//轉json，一樣要wait
+          const locations = data.records.location;
+          if (!locations || !locations.length) {
+            weatherList.textContent = '未取得任何天氣資料';
+            return;
+          }
+
+
+          // 清空載入中提示
+          weatherList.innerHTML = '';
+
+
+          // 顯示每個地區的天氣簡述 (第一時段)
+          locations.forEach(loc => {
+            const item = document.createElement('div');
+            item.className = 'weather-item';
+
+
+            const area = document.createElement('h3');
+            area.textContent = loc.locationName;
+            item.appendChild(area);
+
+
+            // 取第一個 time 節點的天氣現象與舒適度
+            const t = loc.weatherElement.find(e => e.elementName === 'PoP');
+            const t1 = loc.weatherElement.find(e => e.elementName === 'CI');
+            const desc = t && t.time && t.time[0] ? t.time[0].parameter.parameterName : '—';
+            const desc1 = t1 && t1.time && t1.time[0] ? t1.time[0].parameter.parameterName : '—';
+
+
+            const p = document.createElement('p');
+            p.textContent = `濕度：${desc}`;
+            const p1 = document.createElement('p1');
+            p1.textContent = `高度：${desc1}`;
+            item.appendChild(p);
+            item.appendChild(p1);
+
+
+            weatherList.appendChild(item);
+          });
+        } catch (err) {
+          weatherList.textContent = '載入失敗：' + err.message;
+        }
+      }
+
+
+      loadWeather();
+    </script>
+  </body>
+</html>
+
